@@ -1,0 +1,47 @@
+variables:
+- group: tacacs_accounts
+- group: ado-pat-git-pipeline
+- group: sw_creds
+
+parameters:
+- name: server_pool
+  displayName: choose pool
+  type: string
+  default: ITC-ITSD-NA-Ansible-UK
+  values:
+    - ITC-ITSD-NA-Ansible-UK
+    - ITC-ITSD-Ansible-UK
+    - ITC-ITSD-Ansible-SG
+    - ITC-ITSD-NA-Ansible-Cloud
+
+- name: IP_list
+  displayName: IP_list
+  default: None
+  type: string
+
+- name: Command
+  displayName: Command
+  default: None
+  type: string
+
+- name: CSV_file
+  displayName: CSV_file
+  default: None
+  type: string
+
+stages:
+
+- stage: 'script'
+  pool: ${{ parameters.server_pool }}
+  jobs:
+  - job: 'Run_the_script'
+    timeoutInMinutes: 0
+    steps:
+    - script: git clone https://system:$(System.AccessToken)@dev.azure.com/chevron/ITC-ITSD-AnsibleNetworkAzure/_git/python-network-testrepo-paei
+      displayName: "Clone paei cfg"
+
+    - script: python3 main.py $(ise_na_username) "$(ise_na_password)" ${{ parameters.IP_list }} ${{ parameters.Command }} ${{ parameters.CSV_file }}
+      displayName: 'Run main.py'
+
+    - script: python3 main2.py $(ise_na_username) "$(ise_na_password)" ${{ parameters.CSV_file }}
+      displayName: 'Run main2.py'
